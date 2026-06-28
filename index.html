@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ビッグファイブ性格チャットシミュレーター | Big Five Personality Chat Simulator</title>
+    <meta name="description" content="AIと心理学の融合。ビッグファイブ性格診断と環境（学校、オフィス、教会、騒音工場など）を加味したAI対話シミュレーター">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css?v=2.6">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="logo-area">
+                <i data-lucide="brain" class="logo-icon"></i>
+                <div class="logo-text">
+                    <span class="logo-subtitle">AI & PSYCHOLOGY SIMULATOR</span>
+                    <h1>Big Five Personality Chat</h1>
+                </div>
+            </div>
+            <div class="api-config-badge" id="apiBadge">
+                <span class="badge-dot"></span>
+                <span class="badge-text" id="apiStatusText">Local Mode</span>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT -->
+        <main class="app-grid">
+            
+            <!-- LEFT PANEL: PERSONALITY & CONFIG -->
+            <section class="left-panel">
+                
+                <!-- API KEY CONFIG -->
+                <div class="card glass-card api-card">
+                    <div class="card-header">
+                        <i data-lucide="key" class="card-icon cyan-icon"></i>
+                        <h2>Gemini API 設定</h2>
+                    </div>
+                    <p class="card-description">Gemini APIキーを入力すると、リアルなAIシミュレーションが行えます。入力しない場合はローカルの簡易シミュレーターが動作します（キーはブラウザに安全に保存されます）。</p>
+                    <div class="api-input-fields" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%;">
+                        <input type="password" id="apiKeyInput" placeholder="AI_API_KEYを入力 (AIzaSy...)" autocomplete="off">
+                        <select id="apiModelSelect" class="api-model-select">
+                            <option value="gemini-2.5-flash" selected>gemini-2.5-flash (推奨 - 高速・軽量)</option>
+                            <option value="gemini-2.5-pro">gemini-2.5-pro (高精度・推論向き)</option>
+                            <option value="gemini-1.5-flash">gemini-1.5-flash (旧モデル)</option>
+                            <option value="gemini-1.5-pro">gemini-1.5-pro (旧モデル)</option>
+                        </select>
+                        <button id="saveKeyBtn" class="btn btn-secondary" style="width: 100%;">設定を保存</button>
+                    </div>
+                </div>
+
+                <!-- PERSONALITY PROFILER -->
+                <div class="card glass-card profiler-card">
+                    <div class="card-header-spaced">
+                        <div class="card-header-title">
+                            <i data-lucide="sliders" class="card-icon purple-icon"></i>
+                            <h2>性格プロファイル</h2>
+                        </div>
+                        <button id="randomizeBtn" class="btn btn-primary btn-icon-text">
+                            <i data-lucide="refresh-cw"></i> ランダム生成
+                        </button>
+                    </div>
+
+                    <!-- Gender Selector Segmented Toggle -->
+                    <div class="gender-selector-container">
+                        <span class="gender-label">性別:</span>
+                        <div class="gender-btn-group">
+                            <button type="button" class="gender-btn active" data-gender="male">👨 男性</button>
+                            <button type="button" class="gender-btn" data-gender="female">👩 女性</button>
+                            <button type="button" class="gender-btn" data-gender="nonbinary">⚧️ その他</button>
+                        </div>
+                    </div>
+
+                    <!-- Age Selector Slider -->
+                    <div class="age-selector-container">
+                        <div class="age-label-group">
+                            <span class="age-label">年齢:</span>
+                            <span class="age-val" id="val-age">25歳</span>
+                        </div>
+                        <div class="slider-container" style="padding: 0;">
+                            <input type="range" id="slider-age" class="factor-slider slider-age" min="10" max="90" value="25">
+                        </div>
+                    </div>
+
+                    <!-- Radar Chart Container -->
+                    <div class="chart-container">
+                        <canvas id="radarChart"></canvas>
+                    </div>
+
+                    <!-- Scores Display with interactive range sliders -->
+                    <div class="metrics-list">
+                        <div class="metric-item" data-factor="openness">
+                            <div class="metric-label-group">
+                                <label for="slider-openness" class="factor-name">開放性 <span class="factor-en">Openness</span></label>
+                                <span class="factor-val" id="val-openness">50%</span>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="slider-openness" class="factor-slider slider-openness" min="0" max="100" value="50">
+                            </div>
+                            <span class="factor-desc">知的好奇心、想像力、新体験への寛容さ</span>
+                        </div>
+
+                        <div class="metric-item" data-factor="conscientiousness">
+                            <div class="metric-label-group">
+                                <label for="slider-conscientiousness" class="factor-name">誠実性 <span class="factor-en">Conscientiousness</span></label>
+                                <span class="factor-val" id="val-conscientiousness">50%</span>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="slider-conscientiousness" class="factor-slider slider-conscientiousness" min="0" max="100" value="50">
+                            </div>
+                            <span class="factor-desc">計画性、自制心、責任感、目標達成への執着</span>
+                        </div>
+
+                        <div class="metric-item" data-factor="extraversion">
+                            <div class="metric-label-group">
+                                <label for="slider-extraversion" class="factor-name">外向性 <span class="factor-en">Extraversion</span></label>
+                                <span class="factor-val" id="val-extraversion">50%</span>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="slider-extraversion" class="factor-slider slider-extraversion" min="0" max="100" value="50">
+                            </div>
+                            <span class="factor-desc">社交性、活動的、刺激やエネルギーを外に求める傾向</span>
+                        </div>
+
+                        <div class="metric-item" data-factor="agreeableness">
+                            <div class="metric-label-group">
+                                <label for="slider-agreeableness" class="factor-name">協調性 <span class="factor-en">Agreeableness</span></label>
+                                <span class="factor-val" id="val-agreeableness">50%</span>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="slider-agreeableness" class="factor-slider slider-agreeableness" min="0" max="100" value="50">
+                            </div>
+                            <span class="factor-desc">他者への思いやり、同調性、信頼、協力的態度</span>
+                        </div>
+
+                        <div class="metric-item" data-factor="neuroticism">
+                            <div class="metric-label-group">
+                                <label for="slider-neuroticism" class="factor-name">神経症傾向 <span class="factor-en">Neuroticism</span></label>
+                                <span class="factor-val" id="val-neuroticism">50%</span>
+                            </div>
+                            <div class="slider-container">
+                                <input type="range" id="slider-neuroticism" class="factor-slider slider-neuroticism" min="0" max="100" value="50">
+                            </div>
+                            <span class="factor-desc">ストレスへの過敏さ、情緒の不安定さ、不安を感じる度合い</span>
+                        </div>
+                    </div>
+
+                    <!-- Character Summary -->
+                    <div class="character-description-card">
+                        <div class="desc-header" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 0.4rem;">
+                                <i data-lucide="user" class="desc-icon"></i>
+                                <h3 style="margin: 0; font-size: 0.85rem;">人物像の解説</h3>
+                            </div>
+                            <button type="button" id="generateDescBtn" class="btn btn-primary" style="padding: 0.4rem 0.8rem; font-size: 0.75rem; border-radius: 8px;">
+                                <i data-lucide="sparkles" style="width: 0.9rem; height: 0.9rem;"></i> 性格分析を開始
+                            </button>
+                        </div>
+                        <div class="desc-loading" id="descLoading" style="display: none;">
+                            <div class="spinner"></div>
+                            <span>性格分析中...</span>
+                        </div>
+                        <div id="characterDescription" contenteditable="true" class="character-desc-box" placeholder="「性格分析を開始」ボタンを押すか、直接編集してください。"></div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- RIGHT PANEL: ENVIRONMENT & SIMULATOR -->
+            <section class="right-panel">
+                
+                <!-- BACKGROUND ENVIRONMENT SETTING -->
+                <div class="card glass-card bg-card">
+                    <div class="card-header">
+                        <i data-lucide="map-pin" class="card-icon cyan-icon"></i>
+                        <h2>バックグラウンド環境設定</h2>
+                    </div>
+                    <p class="card-description">対話を行う場所を選択してください。環境に応じてキャラクターの反応、声のトーン、話し方が変化します。</p>
+                    
+                    <div class="bg-options-grid">
+                        <button class="bg-option active" data-bg="school">
+                            <span class="bg-icon">🏫</span>
+                            <div class="bg-info">
+                                <span class="bg-name">学校の教室</span>
+                                <span class="bg-desc">少し賑やか・友達や先生がいる</span>
+                            </div>
+                        </button>
+                        <button class="bg-option" data-bg="office">
+                            <span class="bg-icon">🏢</span>
+                            <div class="bg-info">
+                                <span class="bg-name">静かなオフィス</span>
+                                <span class="bg-desc">仕事中・敬語・落ち着いたトーン</span>
+                            </div>
+                        </button>
+                        <button class="bg-option" data-bg="church">
+                            <span class="bg-icon">⛪</span>
+                            <div class="bg-info">
+                                <span class="bg-name">静まり返った教会</span>
+                                <span class="bg-desc">厳か・小声（ヒソヒソ声）を意識</span>
+                            </div>
+                        </button>
+                        <button class="bg-option" data-bg="factory">
+                            <span class="bg-icon">🏭</span>
+                            <div class="bg-info">
+                                <span class="bg-name">騒音の大きい工場</span>
+                                <span class="bg-desc">機械音が爆音・大声で叫ぶ必要あり</span>
+                            </div>
+                        </button>
+                        <button class="bg-option" data-bg="izakaya">
+                            <span class="bg-icon">🍻</span>
+                            <div class="bg-info">
+                                <span class="bg-name">賑やかな居酒屋</span>
+                                <span class="bg-desc">騒がしい・お酒入り・フランク口調</span>
+                            </div>
+                        </button>
+                        <button class="bg-option" data-bg="custom">
+                            <span class="bg-icon">⚙️</span>
+                            <div class="bg-info">
+                                <span class="bg-name">カスタム設定</span>
+                                <span class="bg-desc">自由なシチュエーションを指定</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Custom Location Input -->
+                    <div id="customBgContainer" class="custom-bg-input-container" style="display: none;">
+                        <input type="text" id="customBgInput" placeholder="例: 深夜の宇宙ステーション、荒れ狂う嵐の船上など..." class="custom-bg-input">
+                    </div>
+                </div>
+
+                <!-- DIALOGUE SIMULATOR -->
+                <div class="card glass-card simulator-card">
+                    <div class="simulator-header">
+                        <div class="sim-title">
+                            <i data-lucide="message-square" class="card-icon purple-icon"></i>
+                            <h2>対話シミュレーター</h2>
+                        </div>
+                        
+                        <!-- Voice / Audio controls -->
+                        <div class="voice-controls">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="ttsToggle" checked>
+                                <span class="slider"></span>
+                            </label>
+                            <span class="voice-label"><i data-lucide="volume-2" class="voice-icon"></i> 音声読み上げ</span>
+                            <select id="voiceSelect" class="voice-selector"></select>
+                        </div>
+                    </div>
+
+                    <!-- Chat Log -->
+                    <div class="chat-log" id="chatLog">
+                        <div class="message system-msg">
+                            性格プロファイルと環境を設定し、下の入力欄から言葉をかけてみてください。
+                        </div>
+                    </div>
+
+                    <!-- AI Typing Indicator -->
+                    <div class="typing-indicator-wrapper" id="typingIndicator" style="display: none;">
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span class="typing-text">シミュレート中...</span>
+                    </div>
+
+                    <!-- Input Form -->
+                    <form id="chatForm" class="chat-input-form">
+                        <input type="text" id="userInput" placeholder="話しかける言葉を入力してください..." autocomplete="off" required>
+                        <button type="submit" id="sendBtn" class="btn btn-primary btn-send">
+                            <span>話しかける</span>
+                            <i data-lucide="send"></i>
+                        </button>
+                    </form>
+
+                    <!-- Reset Chat -->
+                    <div class="sim-footer">
+                        <button id="clearChatBtn" class="btn btn-link btn-icon-text">
+                            <i data-lucide="trash-2"></i> チャット履歴を消去
+                        </button>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+        
+        <footer class="app-footer">
+            <p>&copy; 2026 Big Five Chat Simulator. Powered by Gemini API & Web Speech API.</p>
+        </footer>
+    </div>
+
+    <!-- Script Init for Lucide -->
+    <script>
+        lucide.createIcons();
+    </script>
+    <script src="app.js?v=2.6"></script>
+</body>
+</html>
