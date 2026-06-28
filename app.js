@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", () => {
 // Load API key from local storage
 function loadApiKey() {
     const savedKey = localStorage.getItem("gemini_api_key");
-    const savedModel = localStorage.getItem("gemini_api_model") || "gemini-2.5-flash";
+    const savedModel = localStorage.getItem("gemini_api_model") || "gemini-3.5-flash";
     if (apiModelSelect) {
         apiModelSelect.value = savedModel;
     }
@@ -511,7 +511,7 @@ chatForm.addEventListener("submit", async (e) => {
 
 // Call Gemini API via fetch
 async function callGeminiAPI(apiKey, promptText) {
-    const apiModel = localStorage.getItem("gemini_api_model") || "gemini-2.5-flash";
+    const apiModel = localStorage.getItem("gemini_api_model") || "gemini-3.5-flash";
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${apiModel}:generateContent?key=${apiKey}`;
     
     const requestOptions = {
